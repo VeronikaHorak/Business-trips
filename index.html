@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Trip Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:      #1e2133;
+            --surf:    #272b42;
+            --surf2:   #2f3450;
+            --brd:     #363c5c;
+            --brd2:    #434a6e;
+            --green:   #2ec27e;
+            --greenhi: #3dda90;
+            --greenlo: rgba(46,194,126,.09);
+            --greenmd: rgba(46,194,126,.18);
+            --blue:    #4a86c8;
+            --bluehi:  #5c9ada;
+            --bluelo:  rgba(74,134,200,.09);
+            --bluemd:  rgba(74,134,200,.18);
+            --text:    #eceef8;
+            --text2:   #a8aac8;
+            --text3:   #6870a0;
+            --red:     #e05050;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            min-height: 100vh;
+            padding: 0 24px 120px;
+            background-image:
+                linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .wrap { max-width: 920px; margin: 0 auto; }
+
+        /* ── HEADER ── */
+        .hdr { padding: 60px 0 48px; }
+        .hdr__eye { font-size: 10px; letter-spacing: .28em; color: var(--green); margin-bottom: 12px; }
+        .hdr__title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(44px, 7.5vw, 78px);
+            line-height: .9;
+            letter-spacing: -.03em;
+            color: var(--text);
+        }
+        .hdr__title em { font-style: normal; color: var(--green); }
+        .hdr__rule {
+            margin-top: 28px;
+            height: 1px;
+            background: linear-gradient(90deg, var(--green) 0%, transparent 55%);
+            opacity: .35;
+        }
+
+        /* ── SECTION HEAD ── */
+        .sec { display: flex; align-items: center; gap: 16px; margin: 44px 0 18px; }
+        .sec__lbl {
+            font-family: 'Syne', sans-serif;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .28em; text-transform: uppercase;
+            color: var(--text2); white-space: nowrap;
+        }
+        .sec__line { flex: 1; height: 1px; background: var(--brd); }
+        .sec__cnt { font-size: 11px; color: var(--green); }
+
+        /* ── LEG CARD ── */
+        .legs { display: flex; flex-direction: column; gap: 16px; }
+
+        .leg {
+            background: var(--surf);
+            border: 1px solid var(--brd);
+            border-left: 3px solid var(--green);
+            animation: fadeUp .35s cubic-bezier(.16,1,.3,1);
+        }
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(10px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .leg__hdr {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--brd);
+            gap: 12px;
+        }
+        .leg__num {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: 11px;
+            letter-spacing: .22em; color: var(--green); flex-shrink: 0;
+        }
+        .leg__route {
+            font-size: 12px; color: var(--text3);
+            flex: 1; text-align: center;
+            letter-spacing: .04em;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .leg__del {
+            background: none; border: 1px solid transparent;
+            color: var(--text3); width: 26px; height: 26px;
+            cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .15s; font-family: inherit; flex-shrink: 0;
+        }
+        .leg__del:hover { border-color: var(--red); color: var(--red); }
+
+        /* trip type toggle */
+        .leg__type { display: flex; margin: 18px 22px 0; border: 1px solid var(--brd2); }
+        .ttype {
+            flex: 1; padding: 9px;
+            background: none; border: none;
+            color: var(--text3);
+            font-family: 'Syne', sans-serif;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            cursor: pointer; transition: all .2s;
+        }
+        .ttype + .ttype { border-left: 1px solid var(--brd2); }
+        .ttype.on { background: var(--greenmd); color: var(--green); }
+
+        /* fields */
+        .leg__fields {
+            padding: 18px 22px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .fld { display: flex; flex-direction: column; }
+        .fld.span2 { grid-column: span 2; }
+
+        .lbl {
+            font-family: 'Syne', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: var(--text); display: block; margin-bottom: 7px;
+        }
+
+        input[type=text],
+        input[type=date],
+        input[type=number] {
+            background: var(--bg);
+            border: 1px solid var(--brd2);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 15px;
+            padding: 10px 13px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+        input::placeholder { color: var(--text3); }
+        input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 2px var(--greenlo);
+        }
+        input:disabled { opacity: .35; cursor: not-allowed; }
+        input[type=date]::-webkit-calendar-picker-indicator {
+            filter: invert(.5) sepia(1) saturate(2) hue-rotate(80deg);
+            cursor: pointer; opacity: .6;
+        }
+        input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        .fhint {
+            font-size: 10px; color: var(--text2);
+            margin-top: 5px; letter-spacing: .03em; line-height: 1.55;
+        }
+        .fhint.accent { color: var(--green); }
+
+        /* custom checkbox row */
+        .chkrow {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 13px;
+            background: var(--bg);
+            border: 1px solid var(--brd2);
+            cursor: pointer; transition: all .2s; user-select: none;
+        }
+        .chkrow:hover { border-color: var(--green); }
+        .chkrow.on { background: var(--greenlo); border-color: var(--green); }
+
+        .chkbox {
+            width: 15px; height: 15px;
+            border: 1.5px solid var(--text3);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all .2s;
+            font-size: 9px; color: transparent; font-family: 'DM Mono', monospace;
+        }
+        .chkrow.on .chkbox { background: var(--green); border-color: var(--green); color: var(--bg); }
+
+        .chklbl { font-size: 12px; color: var(--text2); transition: color .2s; }
+        .chkrow.on .chklbl { color: var(--text); }
+        .chknote { font-size: 10px; color: var(--green); margin-left: auto; opacity: 0; transition: opacity .2s; }
+        .chkrow.on .chknote { opacity: 1; }
+
+        /* leg footer */
+        .leg__ftr {
+            padding: 14px 22px;
+            border-top: 1px solid var(--brd);
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 10px;
+        }
+        .leg__tip { font-size: 10px; color: var(--text2); letter-spacing: .03em; }
+        .leg__tip span { color: var(--green); }
+
+        .btn-fly {
+            background: var(--green);
+            color: #0f1520;
+            border: none;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 11px;
+            letter-spacing: .18em; text-transform: uppercase;
+            padding: 11px 22px;
+            cursor: pointer; transition: all .2s;
+            display: flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-fly:hover {
+            background: var(--greenhi);
+            box-shadow: 0 6px 28px rgba(46,194,126,.3);
+            transform: translateY(-1px);
+        }
+        .btn-fly:active { transform: translateY(0); }
+
+        /* ── ADD LEG ── */
+        .btn-addleg {
+            width: 100%; margin-top: 12px; padding: 14px;
+            background: none; border: 1px dashed var(--brd2);
+            color: var(--text2);
+            font-family: 'Syne', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .2em; text-transform: uppercase;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-addleg:hover { border-color: var(--green); color: var(--green); background: var(--greenlo); }
+
+        /* ── ACCOMMODATION ── */
+        .accard {
+            background: var(--surf);
+            border: 1px solid var(--brd);
+            border-left: 3px solid var(--blue);
+        }
+        .accard__top {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 20px 22px;
+            cursor: pointer; user-select: none;
+            transition: background .2s; gap: 12px;
+        }
+        .accard__top:hover { background: var(--bluelo); }
+
+        .accard__title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: 14px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .accard__badge {
+            font-size: 9px; letter-spacing: .18em;
+            padding: 3px 8px;
+            border: 1px solid rgba(74,134,200,.4);
+            color: var(--bluehi); background: var(--bluelo);
+            font-family: 'DM Mono', monospace; font-weight: 400;
+        }
+
+        .sw {
+            width: 42px; height: 22px;
+            background: var(--brd2); border-radius: 11px;
+            position: relative; transition: background .3s; flex-shrink: 0;
+        }
+        .sw::after {
+            content: ''; position: absolute;
+            width: 16px; height: 16px;
+            background: var(--text3); border-radius: 50%;
+            top: 3px; left: 3px;
+            transition: all .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .sw.on { background: var(--blue); }
+        .sw.on::after { transform: translateX(20px); background: #fff; }
+
+        .accard__body {
+            display: none;
+            padding: 0 22px 24px;
+            border-top: 1px solid var(--brd);
+        }
+        .accard__body.open { display: block; animation: fadeUp .3s ease; }
+
+        .acfields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px; padding-top: 20px; margin-bottom: 4px;
+        }
+
+        .btn-hotel {
+            background: var(--blue); color: #fff;
+            border: none;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 11px;
+            letter-spacing: .18em; text-transform: uppercase;
+            padding: 12px 26px;
+            cursor: pointer; transition: all .2s;
+            margin-top: 18px;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-hotel:hover {
+            background: var(--bluehi);
+            box-shadow: 0 6px 28px rgba(74,134,200,.32);
+            transform: translateY(-1px);
+        }
+        .btn-hotel:active { transform: translateY(0); }
+
+        /* footer */
+        .footnote {
+            margin-top: 56px; padding-top: 20px;
+            border-top: 1px solid var(--brd);
+            font-size: 10px; color: var(--text2);
+            letter-spacing: .06em; line-height: 1.8;
+        }
+        .footnote strong { color: var(--text); }
+
+        /* responsive */
+        @media (max-width: 580px) {
+            .leg__fields, .acfields { grid-template-columns: 1fr; }
+            .fld.span2 { grid-column: span 1; }
+            .hdr__title { font-size: 40px; }
+            .leg__ftr { flex-direction: column; align-items: stretch; }
+            .btn-fly { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- City autocomplete datalist -->
+<datalist id="cities">
+    <option value="Prague"><option value="Brno"><option value="Ostrava">
+    <option value="London"><option value="London Heathrow"><option value="London Gatwick"><option value="London Stansted">
+    <option value="Paris"><option value="Amsterdam"><option value="Berlin"><option value="Vienna">
+    <option value="Rome"><option value="Barcelona"><option value="Madrid"><option value="Munich">
+    <option value="Frankfurt"><option value="Zurich"><option value="Brussels"><option value="Warsaw">
+    <option value="Budapest"><option value="Bucharest"><option value="Athens"><option value="Istanbul">
+    <option value="Oslo"><option value="Stockholm"><option value="Copenhagen"><option value="Helsinki">
+    <option value="Lisbon"><option value="Porto"><option value="Milan"><option value="Venice">
+    <option value="Naples"><option value="Nice"><option value="Lyon"><option value="Marseille">
+    <option value="Hamburg"><option value="Dusseldorf"><option value="Cologne"><option value="Stuttgart">
+    <option value="Bratislava"><option value="Krakow"><option value="Gdansk"><option value="Wroclaw">
+    <option value="Riga"><option value="Tallinn"><option value="Vilnius"><option value="Zagreb">
+    <option value="Belgrade"><option value="Sofia"><option value="Edinburgh"><option value="Dublin">
+    <option value="Reykjavik"><option value="Geneva"><option value="Luxembourg">
+    <option value="Dubai"><option value="Abu Dhabi"><option value="Doha"><option value="Riyadh">
+    <option value="Tel Aviv"><option value="Cairo"><option value="Casablanca"><option value="Nairobi">
+    <option value="Cape Town"><option value="Johannesburg">
+    <option value="New York"><option value="Los Angeles"><option value="Miami"><option value="Chicago">
+    <option value="San Francisco"><option value="Boston"><option value="Washington"><option value="Houston">
+    <option value="Dallas"><option value="Atlanta"><option value="Seattle"><option value="Las Vegas">
+    <option value="Orlando"><option value="Denver"><option value="Phoenix"><option value="Philadelphia">
+    <option value="Toronto"><option value="Montreal"><option value="Vancouver">
+    <option value="Mexico City"><option value="Sao Paulo"><option value="Buenos Aires">
+    <option value="Bogota"><option value="Lima"><option value="Santiago">
+    <option value="Tokyo"><option value="Osaka"><option value="Seoul"><option value="Beijing">
+    <option value="Shanghai"><option value="Hong Kong"><option value="Singapore">
+    <option value="Bangkok"><option value="Kuala Lumpur"><option value="Jakarta"><option value="Manila">
+    <option value="Taipei"><option value="Ho Chi Minh City"><option value="Hanoi">
+    <option value="Mumbai"><option value="Delhi"><option value="Bangalore">
+    <option value="Sydney"><option value="Melbourne">
+</datalist>
+
+<div class="wrap">
+
+    <header class="hdr">
+        <p class="hdr__eye">// firemní cestovní plánování</p>
+        <h1 class="hdr__title">Business<br><em>Trip</em> Planner</h1>
+        <div class="hdr__rule"></div>
+    </header>
+
+    <!-- LEGS -->
+    <div class="sec">
+        <span class="sec__lbl">Úseky cesty</span>
+        <div class="sec__line"></div>
+        <span class="sec__cnt" id="leg-cnt">01</span>
+    </div>
+
+    <div class="legs" id="legs"></div>
+
+    <button class="btn-addleg" onclick="addLeg()">+ Přidat další úsek cesty</button>
+
+    <!-- ACCOMMODATION -->
+    <div class="sec" style="margin-top:52px">
+        <span class="sec__lbl">Ubytování</span>
+        <div class="sec__line"></div>
+    </div>
+
+    <div class="accard">
+        <div class="accard__top" onclick="toggleAccomm()">
+            <div class="accard__title">
+                Hledat ubytování
+                <span class="accard__badge">HOTEL / APARTMÁN</span>
+            </div>
+            <div class="sw" id="accsw"></div>
+        </div>
+        <div class="accard__body" id="accbody">
+            <div class="acfields">
+                <div class="fld">
+                    <span class="lbl">Město ubytování</span>
+                    <input type="text" id="h-city" placeholder="např. Breda">
+                    <p class="fhint">Může se lišit od destinace letu — letíte do Amsterdamu, ubytování v Breda</p>
+                </div>
+                <div class="fld">
+                    <span class="lbl">Počet hostů</span>
+                    <input type="number" id="h-guests" value="1" min="1" max="50">
+                </div>
+                <div class="fld">
+                    <span class="lbl">Check-in</span>
+                    <input type="date" id="h-cin">
+                    <p class="fhint">↑ Automaticky z data odletu</p>
+                </div>
+                <div class="fld">
+                    <span class="lbl">Check-out</span>
+                    <input type="date" id="h-cout">
+                    <p class="fhint">↑ Automaticky z data návratu</p>
+                </div>
+            </div>
+            <button class="btn-hotel" onclick="searchHotels()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Vyhledat na Booking.com
+            </button>
+        </div>
+    </div>
+
+    <div class="footnote">
+        Letenky: <strong>Skyscanner</strong> — ceny v CZK, předvyplní letiště, datum i počet cestujících. &nbsp;·&nbsp;
+        Ubytování: <strong>Booking.com</strong> — předvyplní město, check-in a check-out. &nbsp;·&nbsp;
+        Pro neznámá letiště (bez IATA kódu) se otevře Google Search s výsledky.
+    </div>
+
+</div>
+
+<script>
+/* ── IATA lookup ───────────────────────────────────────────── */
+const IATA = {
+  'prague':'PRG','brno':'BRQ','ostrava':'OSR',
+  'london':'LHR','london heathrow':'LHR','london gatwick':'LGW','london stansted':'STN','london city':'LCY',
+  'paris':'CDG','paris charles de gaulle':'CDG','paris orly':'ORY',
+  'amsterdam':'AMS','berlin':'BER','vienna':'VIE',
+  'rome':'FCO','rome fiumicino':'FCO','rome ciampino':'CIA',
+  'barcelona':'BCN','madrid':'MAD','munich':'MUC','frankfurt':'FRA',
+  'zurich':'ZRH','brussels':'BRU','warsaw':'WAW','budapest':'BUD',
+  'bucharest':'OTP','athens':'ATH','istanbul':'IST',
+  'oslo':'OSL','stockholm':'ARN','copenhagen':'CPH','helsinki':'HEL',
+  'lisbon':'LIS','porto':'OPO',
+  'milan':'MXP','milan malpensa':'MXP','milan linate':'LIN','milan bergamo':'BGY',
+  'venice':'VCE','naples':'NAP','nice':'NCE','lyon':'LYS','marseille':'MRS',
+  'hamburg':'HAM','dusseldorf':'DUS','düsseldorf':'DUS','cologne':'CGN','stuttgart':'STR',
+  'bratislava':'BTS','krakow':'KRK','kraków':'KRK','gdansk':'GDN','gdańsk':'GDN',
+  'wroclaw':'WRO','wrocław':'WRO',
+  'riga':'RIX','tallinn':'TLL','vilnius':'VNO','zagreb':'ZAG','belgrade':'BEG','sofia':'SOF',
+  'edinburgh':'EDI','dublin':'DUB','reykjavik':'KEF','geneva':'GVA','luxembourg':'LUX',
+  'dubai':'DXB','abu dhabi':'AUH','doha':'DOH','riyadh':'RUH',
+  'tel aviv':'TLV','cairo':'CAI','casablanca':'CMN','nairobi':'NBO',
+  'cape town':'CPT','johannesburg':'JNB',
+  'new york':'JFK','new york jfk':'JFK','new york laguardia':'LGA','new york newark':'EWR',
+  'los angeles':'LAX','miami':'MIA','chicago':'ORD','san francisco':'SFO',
+  'boston':'BOS','washington':'IAD','houston':'IAH','dallas':'DFW',
+  'atlanta':'ATL','seattle':'SEA','las vegas':'LAS','orlando':'MCO',
+  'denver':'DEN','phoenix':'PHX','philadelphia':'PHL',
+  'toronto':'YYZ','montreal':'YUL','vancouver':'YVR',
+  'mexico city':'MEX','sao paulo':'GRU','buenos aires':'EZE',
+  'bogota':'BOG','lima':'LIM','santiago':'SCL',
+  'tokyo':'NRT','tokyo narita':'NRT','tokyo haneda':'HND',
+  'osaka':'KIX','seoul':'ICN','beijing':'PEK','shanghai':'PVG',
+  'hong kong':'HKG','singapore':'SIN',
+  'bangkok':'BKK','kuala lumpur':'KUL','jakarta':'CGK','manila':'MNL',
+  'taipei':'TPE','ho chi minh city':'SGN','hanoi':'HAN',
+  'mumbai':'BOM','delhi':'DEL','new delhi':'DEL','bangalore':'BLR',
+  'sydney':'SYD','melbourne':'MEL',
+};
+
+function getIATA(city) {
+  return IATA[city.toLowerCase().trim()] || null;
+}
+
+/* ── State ─────────────────────────────────────────────────── */
+let legN = 0;
+let accOpen = false;
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+
+/* ── Add leg ────────────────────────────────────────────────── */
+function addLeg() {
+    legN++;
+    const id = legN;
+
+    // Auto-fill From = prev leg's To
+    let autoFrom = '';
+    if (id > 1) {
+        const prev = document.getElementById(`l${id-1}-to`);
+        if (prev) autoFrom = prev.value;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'leg';
+    div.id = `leg${id}`;
+    div.innerHTML = `
+        <div class="leg__hdr">
+            <span class="leg__num">ÚSEK ${pad2(id)}</span>
+            <span class="leg__route" id="l${id}-route">—</span>
+            ${id > 1
+                ? `<button class="leg__del" onclick="removeLeg(${id})" title="Odstranit">✕</button>`
+                : `<span style="width:26px;flex-shrink:0"></span>`}
+        </div>
+
+        <div class="leg__type" id="l${id}-type">
+            <button class="ttype on" onclick="setType(${id},'one')">Jednosměrná</button>
+            <button class="ttype"    onclick="setType(${id},'ret')">Zpáteční</button>
+        </div>
+
+        <div class="leg__fields">
+            <div class="fld">
+                <span class="lbl">Odkud</span>
+                <input type="text" id="l${id}-from" placeholder="Prague" value="${autoFrom}"
+                    list="cities" autocomplete="off" oninput="routeUpdate(${id})">
+            </div>
+            <div class="fld">
+                <span class="lbl">Kam</span>
+                <input type="text" id="l${id}-to" placeholder="London"
+                    list="cities" autocomplete="off" oninput="routeUpdate(${id})">
+            </div>
+            <div class="fld">
+                <span class="lbl">Datum odletu</span>
+                <input type="date" id="l${id}-dep">
+            </div>
+            <div class="fld">
+                <span class="lbl">Datum návratu</span>
+                <input type="date" id="l${id}-ret" disabled>
+                <p class="fhint" id="l${id}-retnote">Vyberte zpáteční pro aktivaci</p>
+            </div>
+            <div class="fld">
+                <span class="lbl">Počet cestujících</span>
+                <input type="number" id="l${id}-pax" value="1" min="1" max="99">
+            </div>
+            <div class="fld" style="justify-content:flex-end">
+                <span class="lbl">&nbsp;</span>
+                <div class="chkrow" id="l${id}-bag" onclick="toggleChk(this)">
+                    <div class="chkbox">✓</div>
+                    <span class="chklbl">Kabinové zavazadlo</span>
+                    <span class="chknote">+ příplatek</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="leg__ftr">
+            <span class="leg__tip">Tip: v Google Flights klikněte <span>Nejlevnější</span></span>
+            <button class="btn-fly" onclick="searchFlights(${id})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-5.5 2.5L10 10 1.8 8.2c-.5-.1-.9.4-.8.9l1 5c.1.5.5.8 1 .8H8l-1.5 3.5c-.2.5.1 1 .6 1H9l2-3h3l2 3h1.9c.5 0 .8-.5.6-1l-1.5-3.5h4.5c.5 0 .9-.3 1-.8l1-5c.1-.5-.3-1-.8-.9z"/></svg>
+                Vyhledat letenky
+            </button>
+        </div>
+    `;
+    document.getElementById('legs').appendChild(div);
+    updateCount();
+
+    setTimeout(() => {
+        const inp = document.getElementById(`l${id}-from`);
+        if (inp) { inp.value ? document.getElementById(`l${id}-to`)?.focus() : inp.focus(); }
+    }, 60);
+}
+
+function removeLeg(id) {
+    const el = document.getElementById(`leg${id}`);
+    if (!el) return;
+    el.style.cssText += 'opacity:0;transform:translateY(-8px);transition:all .2s;';
+    setTimeout(() => { el.remove(); updateCount(); }, 200);
+}
+
+function updateCount() {
+    const n = document.querySelectorAll('.leg').length;
+    document.getElementById('leg-cnt').textContent = pad2(n);
+}
+
+function setType(id, type) {
+    const btns = document.querySelectorAll(`#l${id}-type .ttype`);
+    btns[0].classList.toggle('on', type === 'one');
+    btns[1].classList.toggle('on', type === 'ret');
+    const retInp  = document.getElementById(`l${id}-ret`);
+    const retNote = document.getElementById(`l${id}-retnote`);
+    if (type === 'ret') {
+        retInp.disabled = false;
+        if (retNote) retNote.style.display = 'none';
+    } else {
+        retInp.disabled = true;
+        retInp.value = '';
+        if (retNote) retNote.style.display = '';
+    }
+}
+
+function toggleChk(el) { el.classList.toggle('on'); }
+
+function routeUpdate(id) {
+    const from = document.getElementById(`l${id}-from`)?.value || '—';
+    const to   = document.getElementById(`l${id}-to`)?.value   || '—';
+    const r    = document.getElementById(`l${id}-route`);
+    if (r) r.textContent = (from !== '—' || to !== '—') ? `${from} → ${to}` : '—';
+}
+
+function accSync() {
+    // Always fill from last leg when called — user can edit afterwards
+    const legs = document.querySelectorAll('.leg');
+    if (!legs.length) return;
+    const last = legs[legs.length - 1];
+    const m = last.id.match(/leg(\d+)/);
+    if (!m) return;
+    const lid = m[1];
+
+    const toCity = document.getElementById(`l${lid}-to`)?.value || '';
+    const dep    = document.getElementById(`l${lid}-dep`)?.value || '';
+    const ret    = document.getElementById(`l${lid}-ret`)?.value || '';
+
+    document.getElementById('h-city').value = toCity;
+    document.getElementById('h-cin').value  = dep;
+    document.getElementById('h-cout').value = ret;
+}
+
+function toggleAccomm() {
+    accOpen = !accOpen;
+    document.getElementById('accsw').classList.toggle('on', accOpen);
+    document.getElementById('accbody').classList.toggle('open', accOpen);
+    if (accOpen) accSync();
+}
+
+/* ── Skyscanner date: YYYY-MM-DD → YYMMDD ─────────────────── */
+function skyDate(d) {
+    if (!d) return '';
+    const [y, m, dd] = d.split('-');
+    return y.slice(2) + m + dd;
+}
+
+/* ── Build Skyscanner URL ──────────────────────────────────── */
+function buildFlightsUrl(from, to, dep, ret, pax, isReturn) {
+    const fromCode = getIATA(from);
+    const toCode   = getIATA(to);
+
+    if (fromCode && toCode && dep) {
+        // Skyscanner deep-link — spolehlivě předvyplní letiště, datum i počet cestujících
+        const d1 = skyDate(dep);
+        const d2 = (isReturn && ret) ? skyDate(ret) : '';
+        const path = d2
+            ? `${fromCode}/${toCode}/${d1}/${d2}/`
+            : `${fromCode}/${toCode}/${d1}/`;
+        return `https://www.skyscanner.net/transport/flights/${path}?adults=${pax}&currency=CZK`;
+    }
+
+    // Fallback pro neznámá letiště — Google Search s flight widgetem
+    let q = `flights from ${from} to ${to}`;
+    if (dep) q += ` ${dep}`;
+    if (isReturn && ret) q += ` return ${ret}`;
+    if (pax > 1) q += ` ${pax} passengers`;
+    return `https://www.google.com/search?q=${encodeURIComponent(q)}&hl=cs&gl=cz`;
+}
+
+function searchFlights(id) {
+    const from = document.getElementById(`l${id}-from`)?.value?.trim();
+    const to   = document.getElementById(`l${id}-to`)?.value?.trim();
+    const dep  = document.getElementById(`l${id}-dep`)?.value;
+    const ret  = document.getElementById(`l${id}-ret`)?.value;
+    const pax  = parseInt(document.getElementById(`l${id}-pax`)?.value) || 1;
+
+    if (!from || !to) {
+        ['from','to'].forEach(k => {
+            const el = document.getElementById(`l${id}-${k}`);
+            if (el && !el.value.trim()) {
+                el.style.borderColor = 'var(--red)';
+                el.focus();
+                setTimeout(() => el.style.borderColor = '', 1800);
+            }
+        });
+        return;
+    }
+
+    const isReturn = !document.getElementById(`l${id}-ret`)?.disabled && !!ret;
+    const url = buildFlightsUrl(from, to, dep, ret, pax, isReturn);
+    window.open(url, '_blank');
+}
+
+/* ── Booking.com URL ───────────────────────────────────────── */
+function searchHotels() {
+    const city   = document.getElementById('h-city')?.value?.trim();
+    const cin    = document.getElementById('h-cin')?.value;
+    const cout   = document.getElementById('h-cout')?.value;
+    const guests = parseInt(document.getElementById('h-guests')?.value) || 1;
+
+    if (!city) {
+        const el = document.getElementById('h-city');
+        if (el) { el.style.borderColor = 'var(--red)'; setTimeout(()=>el.style.borderColor='',1800); el.focus(); }
+        return;
+    }
+
+    // Booking.com — spolehlivě přijímá město + datum check-in/check-out
+    let url = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&selected_currency=CZK&lang=cs&no_rooms=1&group_adults=${guests}`;
+    if (cin)  url += `&checkin=${cin}`;
+    if (cout) url += `&checkout=${cout}`;
+
+    window.open(url, '_blank');
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => { addLeg(); });
+</script>
+</body>
+</html>
